@@ -4,8 +4,30 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
+Parameters:
+  ProjectName:
+    Type: String
+    Default: CloudLearnHub
+    Description: 'The name of the resources'
+  GroupName:
+    Type: String
+    Default: Group1
+    Description: 'The name of the group'
+  Local:
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+    Description: 'Run the Lambda functions locally'
+
 
 Globals:
+  HttpApi:
+    Tags:
+      ProjectName: !Ref ProjectName
+      GroupName: !Ref GroupName
+      
   Function:
     Timeout: 5
     Runtime: nodejs20.x
@@ -16,14 +38,15 @@ Globals:
         UsersTable: !Ref UsersTable
         CoursesTable: !Ref CoursesTable
         PurchasesTable: !Ref PurchasesTable
-        LOCAL: true
+        LOCAL: !Ref Local
+    Tags:
+      ProjectName: !Ref ProjectName
+      GroupName: !Ref GroupName
     Layers:
       - !Ref LambdaLayer
 
 
 Resources:
-
-
   # create LambdaAuthInvokeRole
   LambdaAuthInvokeRole:
     Type: AWS::IAM::Role
@@ -56,14 +79,8 @@ Resources:
         Authorizers:
           MyLambdaAuthorizer:
             AuthorizerPayloadFormatVersion: "2.0"
-            FunctionArn:
-              Fn::GetAtt:
-                - MyAuthFunction
-                - Arn
-            FunctionInvokeRole:
-              Fn::GetAtt:
-                - LambdaAuthInvokeRole
-                - Arn
+            FunctionArn: !GetAtt MyAuthFunction.Arn
+            FunctionInvokeRole: !GetAtt LambdaAuthInvokeRole.Arn
             Identity:
               Headers:
                 - Authorization
@@ -231,4 +248,4 @@ Resources:
 Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
