@@ -194,9 +194,7 @@ Resources:
             ApiId: !Ref ApiGatewayApi
             Path: /courses
             Method: GET
-            Parameters:
-              Querystrings:
-                - category
+
 
   GetCourseById:
     Type: AWS::Serverless::Function
