@@ -2,8 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   CloudLearnHub
 Transform:
-- AWS::Serverless-2016-10-31
-
+  - AWS::Serverless-2016-10-31
 
 Globals:
   Function:
@@ -20,16 +19,13 @@ Globals:
     Layers:
       - !Ref LambdaLayer
 
-
 Resources:
-
-
   # create LambdaAuthInvokeRole
   LambdaAuthInvokeRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -40,7 +36,7 @@ Resources:
       Policies:
         - PolicyName: LambdaInvokeAuthPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -51,6 +47,13 @@ Resources:
   ApiGatewayApi:
     Type: AWS::Serverless::HttpApi
     Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "http://localhost:5173"
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - "*"
       FailOnWarnings: true
       Auth:
         Authorizers:
@@ -68,28 +71,25 @@ Resources:
               Headers:
                 - Authorization
 
-
   MyAuthFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/auth/
       Handler: index.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
 
   LambdaLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-        LayerName: myLayer
-        Description: Nodejs custom layer
-        ContentUri: dependencies/
-        CompatibleRuntimes:
-          - nodejs16.x
-          - nodejs18.x
-          - nodejs20.x
-
-
+      LayerName: myLayer
+      Description: Nodejs custom layer
+      ContentUri: dependencies/
+      CompatibleRuntimes:
+        - nodejs16.x
+        - nodejs18.x
+        - nodejs20.x
 
   Signup:
     Type: AWS::Serverless::Function
@@ -97,8 +97,8 @@ Resources:
       CodeUri: src/handlers/users/
       Handler: signup.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -113,8 +113,8 @@ Resources:
       CodeUri: src/handlers/users/
       Handler: signin.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -123,15 +123,14 @@ Resources:
             Path: /signin
             Method: POST
 
-
   GetProfile:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/users/
       Handler: get-profile.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -142,15 +141,14 @@ Resources:
             Auth:
               Authorizer: MyLambdaAuthorizer
 
-
   GetCourses:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/courses/
       Handler: get.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref CoursesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
       Events:
         Api:
           Type: HttpApi
@@ -158,7 +156,25 @@ Resources:
             ApiId: !Ref ApiGatewayApi
             Path: /courses
             Method: GET
+            Parameters:
+              Querystrings:
+                - category
 
+  GetCourseById:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/courses/
+      Handler: get-by-id.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /courses/{id}
+            Method: GET
 
   PostCourse:
     Type: AWS::Serverless::Function
@@ -166,8 +182,8 @@ Resources:
       CodeUri: src/handlers/courses/
       Handler: post.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref CoursesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
       Events:
         Api:
           Type: HttpApi
@@ -177,8 +193,6 @@ Resources:
             Method: POST
             Auth:
               Authorizer: MyLambdaAuthorizer
-
-
 
   UsersTable:
     Type: AWS::Serverless::SimpleTable
