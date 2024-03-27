@@ -4,101 +4,184 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
-# Resources declares the AWS resources that you want to include in the stack
-# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
+
+Globals:
+  Function:
+    Timeout: 5
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        UsersTable: !Ref UsersTable
+        CoursesTable: !Ref CoursesTable
+        PurchasesTable: !Ref PurchasesTable
+        LOCAL: true
+    Layers:
+      - !Ref LambdaLayer
+
+
 Resources:
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
-  # This is a Lambda function config associated with the source code: get-all-items.js
-  getAllItemsFunction:
+
+  # create LambdaAuthInvokeRole
+  LambdaAuthInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaInvokeAuthPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt MyAuthFunction.Arn
+
+  ApiGatewayApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      FailOnWarnings: true
+      Auth:
+        Authorizers:
+          MyLambdaAuthorizer:
+            AuthorizerPayloadFormatVersion: "2.0"
+            FunctionArn:
+              Fn::GetAtt:
+                - MyAuthFunction
+                - Arn
+            FunctionInvokeRole:
+              Fn::GetAtt:
+                - LambdaAuthInvokeRole
+                - Arn
+            Identity:
+              Headers:
+                - Authorization
+
+
+  MyAuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/get-all-items.getAllItemsHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP get method to get all items from
-        a DynamoDB table.
+      CodeUri: src/handlers/auth/
+      Handler: index.handler
       Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
       - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+          TableName: !Ref UsersTable
 
-  # This is a Lambda function config associated with the source code: get-by-id.js
-  getByIdFunction:
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+        LayerName: myLayer
+        Description: Nodejs custom layer
+        ContentUri: dependencies/
+        CompatibleRuntimes:
+          - nodejs16.x
+          - nodejs18.x
+          - nodejs20.x
+
+
+
+  Signup:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/get-by-id.getByIdHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP get method to get one item by
-        id from a DynamoDB table.
+      CodeUri: src/handlers/users/
+      Handler: signup.handler
       Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
       - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
+          TableName: !Ref UsersTable
       Events:
         Api:
-          Type: Api
+          Type: HttpApi
           Properties:
-            Path: /{id}
-            Method: GET
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-
-  # This is a Lambda function config associated with the source code: put-item.js
-  putItemFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/put-item.putItemHandler
-      Runtime: nodejs20.x
-      Architectures:
-      - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Description: A simple example includes a HTTP post method to add one item to
-        a DynamoDB table.
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
+            ApiId: !Ref ApiGatewayApi
+            Path: /signup
             Method: POST
-  # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
 
-  # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
-  SampleTable:
+  Signin:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/users/
+      Handler: signin.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /signin
+            Method: POST
+
+
+  GetProfile:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/users/
+      Handler: get-profile.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /profile
+            Method: GET
+            Auth:
+              Authorizer: MyLambdaAuthorizer
+
+
+  GetCourses:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/courses/
+      Handler: get.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref CoursesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /courses
+            Method: GET
+
+
+
+  UsersTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  CoursesTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  PurchasesTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
       PrimaryKey:
@@ -112,8 +195,3 @@ Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    LoggingConfig:
-      LogFormat: JSON

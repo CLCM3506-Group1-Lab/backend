@@ -1,5 +1,23 @@
 # CloudLearnHub
 
+
+# Local Test
+
+From root directory
+```bash
+# Start dynamodb locally in docker
+docker-compose up -d
+
+# use aws cli to create dynamodb tables (no need to run everytime)
+./create-table.sh
+
+# build and start
+sam build
+sam local start-api --port 8080 --docker-network bvc-proj
+```
+
+Then access the api from http://localhost:8080
+
 This project contains source code and supporting files for a serverless application that you can deploy with the AWS Serverless Application Model (AWS SAM) command line interface (CLI). It includes the following files and folders:
 
 - `src` - Code for the application's Lambda function.
