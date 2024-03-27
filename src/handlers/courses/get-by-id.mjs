@@ -1,17 +1,20 @@
 import { getDynamodbClient } from '/opt/nodejs/helper.mjs';
-import { ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand } from '@aws-sdk/lib-dynamodb';
 
 const ddbDocClient = getDynamodbClient();
 
 const tableName = process.env.CoursesTable;
 
-export const handler = async (id) => {
+export const handler = async (event) => {
+  // get id from path parameters
+  const { id } = event.pathParameters;
+
   const params = {
     TableName: tableName,
     Key: { id }
   };
 
-  const command = new ScanCommand(params);
+  const command = new GetCommand(params);
 
   try {
     const data = await ddbDocClient.send(command);
