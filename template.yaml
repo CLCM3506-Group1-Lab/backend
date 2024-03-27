@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   CloudLearnHub
+
 Transform:
-- AWS::Serverless-2016-10-31
+  - AWS::Serverless-2016-10-31
 
 Parameters:
   ProjectName:
@@ -21,13 +22,12 @@ Parameters:
       - false
     Description: 'Run the Lambda functions locally'
 
-
 Globals:
   HttpApi:
     Tags:
       ProjectName: !Ref ProjectName
       GroupName: !Ref GroupName
-      
+
   Function:
     Timeout: 5
     Runtime: nodejs20.x
@@ -44,7 +44,6 @@ Globals:
       GroupName: !Ref GroupName
     Layers:
       - !Ref LambdaLayer
-
 
 Resources:
   # create LambdaAuthInvokeRole
@@ -78,13 +77,12 @@ Resources:
       Auth:
         Authorizers:
           MyLambdaAuthorizer:
-            AuthorizerPayloadFormatVersion: "2.0"
+            AuthorizerPayloadFormatVersion: '2.0'
             FunctionArn: !GetAtt MyAuthFunction.Arn
             FunctionInvokeRole: !GetAtt LambdaAuthInvokeRole.Arn
             Identity:
               Headers:
                 - Authorization
-
 
   MyAuthFunction:
     Type: AWS::Serverless::Function
@@ -92,21 +90,19 @@ Resources:
       CodeUri: src/handlers/auth/
       Handler: index.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
 
   LambdaLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-        LayerName: myLayer
-        Description: Nodejs custom layer
-        ContentUri: dependencies/
-        CompatibleRuntimes:
-          - nodejs16.x
-          - nodejs18.x
-          - nodejs20.x
-
-
+      LayerName: myLayer
+      Description: Nodejs custom layer
+      ContentUri: dependencies/
+      CompatibleRuntimes:
+        - nodejs16.x
+        - nodejs18.x
+        - nodejs20.x
 
   Signup:
     Type: AWS::Serverless::Function
@@ -114,8 +110,8 @@ Resources:
       CodeUri: src/handlers/users/
       Handler: signup.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -130,8 +126,8 @@ Resources:
       CodeUri: src/handlers/users/
       Handler: signin.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -140,15 +136,14 @@ Resources:
             Path: /signin
             Method: POST
 
-
   GetProfile:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/users/
       Handler: get-profile.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -165,8 +160,8 @@ Resources:
       CodeUri: src/handlers/users/
       Handler: update-profile.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Events:
         Api:
           Type: HttpApi
@@ -177,15 +172,14 @@ Resources:
             Auth:
               Authorizer: MyLambdaAuthorizer
 
-
   GetCourses:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/courses/
       Handler: get.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref CoursesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
       Events:
         Api:
           Type: HttpApi
@@ -194,15 +188,14 @@ Resources:
             Path: /courses
             Method: GET
 
-
   PostCourse:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/handlers/courses/
       Handler: post.handler
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref CoursesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
       Events:
         Api:
           Type: HttpApi
@@ -213,17 +206,30 @@ Resources:
             Auth:
               Authorizer: MyLambdaAuthorizer
 
-
-
   UsersTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
 
   CoursesTable:
     Type: AWS::Serverless::SimpleTable
@@ -236,16 +242,31 @@ Resources:
         WriteCapacityUnits: 2
 
   PurchasesTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
 
 Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub 'https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'

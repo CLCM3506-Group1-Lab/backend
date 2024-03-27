@@ -1,5 +1,5 @@
 import { getDynamodbClient, getToken } from '/opt/nodejs/helper.mjs';
-import { ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { QueryCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -31,15 +31,17 @@ export const handler = async (event) => {
 
   let userData;
   try {
-    const result = await ddbDocClient.send(
-      new ScanCommand({
-        TableName: tableName,
-        FilterExpression: 'email = :email',
-        ExpressionAttributeValues: {
-          ':email': email
-        }
-      })
-    );
+    const queryParam = {
+      TableName: tableName,
+      IndexName: 'EmailIndex',
+      KeyConditionExpression: 'email = :email',
+      ExpressionAttributeValues: {
+        ':email': email
+      }
+    };
+
+    const result = await ddbDocClient.send(new QueryCommand(queryParam));
+
     userData = result.Items[0]; // get the first item
   } catch (err) {
     console.log('Error', err.stack);
