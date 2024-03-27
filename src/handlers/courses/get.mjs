@@ -6,7 +6,6 @@ const ddbDocClient = getDynamodbClient();
 const tableName = process.env.CoursesTable;
 
 export const handler = async (event) => {
-  console.log({ event });
   const params = {
     TableName: tableName
   };

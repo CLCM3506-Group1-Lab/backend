@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-import { getJwtConfig } from '/opt/nodejs/helper.mjs';
+import { getJwtConfig, ADMIN_EMAIL } from '/opt/nodejs/helper.mjs';
 const { jwtSecret } = getJwtConfig();
 
 export const handler = async (event) => {
@@ -23,7 +23,8 @@ export const handler = async (event) => {
       },
       context: {
         id,
-        email
+        email,
+        admin: ADMIN_EMAIL.includes(email)
       }
     };
   } else {

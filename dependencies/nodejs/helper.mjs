@@ -1,6 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
+const ADMIN_EMAIL = ['z.fu177@mybvc.ca'];
+
 function getDynamodbClient() {
   const client = new DynamoDBClient({
     region: process.env.AWS_REGION || 'us-east-1',
@@ -16,4 +18,4 @@ function getJwtConfig() {
   return { jwtSecret, jwtExpiry };
 }
 
-export { getDynamodbClient, getJwtConfig };
+export { getDynamodbClient, getJwtConfig, ADMIN_EMAIL };

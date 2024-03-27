@@ -160,6 +160,25 @@ Resources:
             Method: GET
 
 
+  PostCourse:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/courses/
+      Handler: post.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref CoursesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /courses
+            Method: POST
+            Auth:
+              Authorizer: MyLambdaAuthorizer
+
+
 
   UsersTable:
     Type: AWS::Serverless::SimpleTable
