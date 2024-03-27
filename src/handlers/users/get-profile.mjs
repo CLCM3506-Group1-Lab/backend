@@ -8,17 +8,18 @@ const tableName = process.env.UsersTable;
 
 export const handler = async (event) => {
   // get id from event decoded by the authorizer
-  const { id, email } = event.requestContext.authorizer.lambda;
+  const { id } = event.requestContext.authorizer.lambda;
 
   // find user details from db using primary key id
-  const params = {
-    TableName: tableName,
-    Key: { id }
-  };
 
   let userData;
   try {
-    const result = await ddbDocClient.send(new GetCommand(params));
+    const result = await ddbDocClient.send(
+      new GetCommand({
+        TableName: tableName,
+        Key: { id }
+      })
+    );
     userData = result.Item;
   } catch (err) {
     console.log('Error', err.stack);
@@ -35,8 +36,11 @@ export const handler = async (event) => {
     };
   }
 
+  delete userData.password;
+  delete userData.salt;
+
   return {
     statusCode: 200,
-    body: JSON.stringify({ id, email })
+    body: JSON.stringify(userData)
   };
 };

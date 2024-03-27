@@ -1,14 +1,12 @@
-import { getDynamodbClient, getJwtConfig } from '/opt/nodejs/helper.mjs';
+import { getDynamodbClient, getToken } from '/opt/nodejs/helper.mjs';
 import { ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import jwt from 'jsonwebtoken';
 
 const ddbDocClient = getDynamodbClient();
 
 // Get the DynamoDB table name from environment variables
 const tableName = process.env.UsersTable;
-const { jwtSecret, jwtExpiry } = getJwtConfig();
 
 export const handler = async (event) => {
   // get email and password from request payload
@@ -79,9 +77,7 @@ export const handler = async (event) => {
   }
 
   // generate a JWT token
-  const token = jwt.sign({ iss: 'bowvalleycollege', email, id: userId }, jwtSecret, {
-    expiresIn: jwtExpiry
-  });
+  const token = getToken({ email, id: userId });
 
   return {
     statusCode: 200,

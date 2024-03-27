@@ -142,6 +142,24 @@ Resources:
             Auth:
               Authorizer: MyLambdaAuthorizer
 
+  UpdateProfile:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/users/
+      Handler: update-profile.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /profile
+            Method: PUT
+            Auth:
+              Authorizer: MyLambdaAuthorizer
+
 
   GetCourses:
     Type: AWS::Serverless::Function
