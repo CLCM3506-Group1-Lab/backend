@@ -5,20 +5,10 @@ const ddbDocClient = getDynamodbClient();
 
 const tableName = process.env.CoursesTable;
 
-export const handler = async (event) => {
-  const category = event.queryStringParameters?.category;
-
+export const handler = async (id) => {
   const params = {
     TableName: tableName,
-    ...(category && category !== "all" && {
-      FilterExpression: '#category = :category',
-      ExpressionAttributeNames: {
-        '#category': 'category',
-      },
-      ExpressionAttributeValues: {
-        ':category': category,
-      },
-    }),
+    Key: { id }
   };
 
   const command = new ScanCommand(params);
@@ -27,13 +17,13 @@ export const handler = async (event) => {
     const data = await ddbDocClient.send(command);
     return {
       statusCode: 200,
-      body: JSON.stringify(data.Items)
+      body: JSON.stringify(data.Item)
     };
   } catch (error) {
     console.error(error);
     return {
       statusCode: 500,
-      body: 'Could not fetch the courses'
+      body: 'Could not fetch the course'
     };
   }
 };

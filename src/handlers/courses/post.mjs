@@ -16,12 +16,12 @@ export const handler = async (event) => {
     };
   }
 
-  const { name, description, price, lecturer, totalHours, numberOfLectures } = JSON.parse(
+  const { name, category, description, price, lecturer, totalHours, numberOfLectures } = JSON.parse(
     event.body
   );
 
   // check any of them is empty
-  if (!name || !description || !price || !lecturer || !totalHours || !numberOfLectures) {
+  if (!name || !category || !description || !price || !lecturer || !totalHours || !numberOfLectures) {
     return {
       statusCode: 400,
       body: JSON.stringify({ message: 'All fields are required' })
@@ -32,6 +32,7 @@ export const handler = async (event) => {
     TableName: tableName,
     Item: {
       id: uuidv4(), // generate a unique id for the course
+      category,
       name,
       description,
       price,
