@@ -241,7 +241,7 @@ Resources:
           TableName: !Ref CoursesTable
       Events:
         Api:
-          Type: Api
+          Type: HttpApi
           Properties:
             ApiId: !Ref ApiGatewayApi
             Path: /hello
@@ -258,7 +258,7 @@ Resources:
             TableName: !Ref CoursesTable
       Events:
         Api:
-          Type: Api
+          Type: HttpApi
           Properties:
             ApiId: !Ref ApiGatewayApi
             Path: /create-checkout-session

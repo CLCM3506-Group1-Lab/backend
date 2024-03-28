@@ -16,7 +16,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-var echoLambda *echoadapter.EchoLambda
+var echoLambda *echoadapter.EchoLambdaV2 // APIGW(HTTP)
 var dynamoDBClient *dynamodb.DynamoDB
 
 // init the Echo Server
@@ -32,7 +32,7 @@ func init() {
 	e.GET("/hello", helloHandler)
 	e.POST("/create-checkout-session", createCheckoutSession)
 
-	echoLambda = echoadapter.New(e)
+	echoLambda = echoadapter.NewV2(e)
 
 	initDynamoDB()
 }
@@ -59,7 +59,7 @@ func helloHandler(c echo.Context) error {
 }
 
 // Handler will deal with Echo working with Lambda
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) { // APIGW(REST)
+func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) { // APIGW(REST)
 	return echoLambda.ProxyWithContext(ctx, req)
 }
 
