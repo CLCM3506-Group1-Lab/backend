@@ -20,6 +20,10 @@ export const handler = async (event) => {
     const data = await ddbDocClient.send(command);
     return {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*', // This is a wildcard '*' to allow any origin. In production, you should limit this to your specific domains.
+        'Access-Control-Allow-Credentials': true,
+      },
       body: JSON.stringify(data.Item)
     };
   } catch (error) {
