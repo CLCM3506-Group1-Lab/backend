@@ -8,7 +8,6 @@ const tableName = process.env.CoursesTable;
 
 export const handler = async (event) => {
   const { id, email, admin } = event.requestContext.authorizer.lambda;
-
   if (!admin) {
     return {
       statusCode: 403,
@@ -16,12 +15,12 @@ export const handler = async (event) => {
     };
   }
 
-  const { name, category, description, price, lecturer, totalHours, numberOfLectures } = JSON.parse(
+  const { name, category, description, price, lecturer, totalHours, numberOfLectures, priceId } = JSON.parse(
     event.body
   );
 
   // check any of them is empty
-  if (!name || !category || !description || !price || !lecturer || !totalHours || !numberOfLectures) {
+  if (!name || !category || !description || !price || !lecturer || !totalHours || !numberOfLectures || !priceId) {
     return {
       statusCode: 400,
       body: JSON.stringify({ message: 'All fields are required' })
@@ -38,7 +37,8 @@ export const handler = async (event) => {
       price,
       lecturer,
       totalHours,
-      numberOfLectures
+      numberOfLectures,
+      priceId,
     }
   };
 

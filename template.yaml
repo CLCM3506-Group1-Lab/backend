@@ -229,6 +229,40 @@ Resources:
             Method: POST
             Auth:
               Authorizer: MyLambdaAuthorizer
+    
+  HelloGo:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/payment/
+      Handler: main
+      Runtime: go1.x
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref CoursesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /hello
+            Method: GET
+
+  CreateCheckoutSession:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/handlers/payment/
+      Handler: create-checkout-session
+      Runtime: go1.x
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ApiGatewayApi
+            Path: /create-checkout-session
+            Method: POST
 
   UsersTable:
     Type: AWS::DynamoDB::Table
