@@ -43,8 +43,6 @@ func init() {
 func initDynamoDB() {
 	// Initialize AWS session
 	log.Print("Initializing DynamoDB session")
-	log.Print("AWS_REGION: ", os.Getenv("AWS_REGION"))
-	log.Print("LOCAL: ", os.Getenv("LOCAL"))
 
 	var endpoint string
 	if os.Getenv("LOCAL") == "true" {
