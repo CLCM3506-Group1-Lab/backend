@@ -10,15 +10,16 @@ export const handler = async (event) => {
 
   const params = {
     TableName: tableName,
-    ...(category && category !== "all" && {
-      FilterExpression: '#category = :category',
-      ExpressionAttributeNames: {
-        '#category': 'category',
-      },
-      ExpressionAttributeValues: {
-        ':category': category,
-      },
-    }),
+    ...(category &&
+      category !== 'all' && {
+        FilterExpression: '#category = :category',
+        ExpressionAttributeNames: {
+          '#category': 'category'
+        },
+        ExpressionAttributeValues: {
+          ':category': category
+        }
+      })
   };
 
   const command = new ScanCommand(params);
@@ -29,7 +30,7 @@ export const handler = async (event) => {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*', // This is a wildcard '*' to allow any origin. In production, you should limit this to your specific domains.
-        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Allow-Credentials': true
       },
       body: JSON.stringify(data.Items)
     };

@@ -2,3 +2,4 @@ node_modules
 .aws-sam
 !dependencies/nodejs/node_modules
 .idea
+docker/dynamodb
